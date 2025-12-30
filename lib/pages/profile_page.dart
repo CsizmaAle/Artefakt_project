@@ -58,7 +58,7 @@ class ProfilePage extends StatelessWidget {
           final row = (snapshot.data?.isNotEmpty ?? false) ? snapshot.data!.first : null;
           final data = row ?? <String, dynamic>{};
           final username = (data['username'] as String?) ??
-              (viewingSelf ? (currentUser?.email ?? '') : '');
+              (viewingSelf ? (currentUser.email ?? '') : '');
           final displayName =
               (data['display_name'] as String?) ?? (data['name'] as String?) ?? '';
           final bio = (data['bio'] as String?) ?? '';

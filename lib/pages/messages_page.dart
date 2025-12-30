@@ -115,7 +115,7 @@ class _ConversationTile extends StatelessWidget {
             final last = (lastSnap.data ?? const []).where((m) => (m['conversation_id'] as String?) == cid).toList();
             final lastRow = last.isNotEmpty ? last.first : null;
             final lastId = (lastRow?['id'] as int?) ?? -1;
-            final lastText = (lastRow?['content'] as String?) ?? '';
+            final lastText = _previewText((lastRow?['content'] as String?) ?? '');
             final lastCreated = (lastRow?['created_at'] as String?) ?? '';
 
             return StreamBuilder<List<Map<String, dynamic>>>(
@@ -133,12 +133,12 @@ class _ConversationTile extends StatelessWidget {
                       ? const CircleAvatar(child: Icon(Icons.group))
                       : (otherId == null
                           ? const CircleAvatar(child: Icon(Icons.person))
-                          : UserAvatar(userId: otherId!)),
+                          : UserAvatar(userId: otherId)),
                   title: isGroup
                       ? Text(title.isNotEmpty ? title : 'Group')
                       : (otherId == null
                           ? const Text('Direct')
-                          : _UserTitle(userId: otherId!)),
+                          : _UserTitle(userId: otherId)),
                   subtitle: Text(lastText.isNotEmpty ? lastText : (subtitle.isNotEmpty ? subtitle : 'No messages yet')),
                   trailing: _TrailingTimeAndUnread(iso: lastCreated, unread: unread),
                   onTap: onTap,
@@ -234,4 +234,9 @@ class _UserTitle extends StatelessWidget {
       },
     );
   }
+}
+
+String _previewText(String content) {
+  if (content.startsWith('post:')) return 'Shared a post';
+  return content;
 }

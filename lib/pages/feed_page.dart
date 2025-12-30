@@ -56,7 +56,7 @@ class FeedPage extends StatelessWidget {
               builder: (context, postsSnap) {
                 final all = postsSnap.data ?? const [];
 
-                DateTime? _parseTs(String? s) => s == null ? null : DateTime.tryParse(s);
+                DateTime? parseTs(String? s) => s == null ? null : DateTime.tryParse(s);
                 final cutoffFollowed = DateTime.now().subtract(const Duration(days: 21));
 
                 final idInFollowedRecent = <String>{};
@@ -64,7 +64,7 @@ class FeedPage extends StatelessWidget {
                 for (final p in all) {
                   final author = (p['author_id'] as String?) ?? '';
                   if (!followingIds.contains(author)) continue;
-                  final ts = _parseTs(p['created_at'] as String?);
+                  final ts = parseTs(p['created_at'] as String?);
                   if (ts != null && ts.isBefore(cutoffFollowed)) continue;
                   followedRecent.add(p);
                   final pid = (p['id'] as String?) ?? '';
@@ -72,8 +72,8 @@ class FeedPage extends StatelessWidget {
                 }
 
                 followedRecent.sort((a, b) {
-                  final aTs = _parseTs(a['created_at'] as String?);
-                  final bTs = _parseTs(b['created_at'] as String?);
+                  final aTs = parseTs(a['created_at'] as String?);
+                  final bTs = parseTs(b['created_at'] as String?);
                   if (aTs != null && bTs != null) return bTs.compareTo(aTs);
                   return ((b['created_at'] as String?) ?? '').compareTo((a['created_at'] as String?) ?? '');
                 });
@@ -93,8 +93,8 @@ class FeedPage extends StatelessWidget {
                 unseen.shuffle();
                 seen.shuffle();
 
-                final ordered = <Map<String, dynamic>>[]
-                  ..addAll(followedRecent)
+                final ordered = <Map<String, dynamic>>[...followedRecent]
+                  
                   ..addAll(unseen)
                   ..addAll(seen);
 

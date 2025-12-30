@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:artefakt_v1/supabase_config.dart';
 
 class PostService {
   final _c = Supabase.instance.client;

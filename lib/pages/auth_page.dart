@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:artefakt_v1/pages/home_page.dart';
+import 'package:artefakt_v1/pages/user_manual_page.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -28,7 +28,9 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final email = Supabase.instance.client.auth.currentSession?.user.email;
       if (!mounted || email == null) return;
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => HomePage(email: email)));
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => UserManualPage(email: email)),
+      );
     });
   }
 
@@ -70,7 +72,9 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
       final email = res.user?.email;
       if (!mounted) return;
       if (email != null) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => HomePage(email: email)));
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => UserManualPage(email: email)),
+        );
       } else {
         _showSnack('Invalid credentials');
       }
@@ -110,7 +114,9 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
         rethrow;
       }
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => HomePage(email: email)));
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => UserManualPage(email: email)),
+      );
     } on AuthException catch (e) {
       _showSnack(e.message);
     } catch (e) {

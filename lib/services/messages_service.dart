@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:artefakt_v1/supabase_config.dart';
 
 class MessagesService {
   final _c = Supabase.instance.client;

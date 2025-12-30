@@ -49,7 +49,7 @@ class RecentPosts extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.4)),
                 ),

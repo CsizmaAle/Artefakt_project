@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:artefakt_v1/supabase_config.dart';
 import 'package:artefakt_v1/services/messages_service.dart';
+import 'package:artefakt_v1/pages/post_detail_page.dart';
 
 class ConversationPage extends StatefulWidget {
   final String conversationId;
@@ -18,6 +19,7 @@ class _ConversationPageState extends State<ConversationPage> {
   Timer? _markReadDebounce;
   final ScrollController _scrollCtrl = ScrollController();
   final List<Map<String, dynamic>> _localEcho = [];
+  static const String _postPrefix = 'post:';
   
   String _dayLabel(String? iso) {
     if (iso == null || iso.isEmpty) return '';
@@ -54,6 +56,12 @@ class _ConversationPageState extends State<ConversationPage> {
     } catch (_) {
       return iso;
     }
+  }
+
+  String? _postIdFromContent(String content) {
+    if (!content.startsWith(_postPrefix)) return null;
+    final id = content.substring(_postPrefix.length).trim();
+    return id.isEmpty ? null : id;
   }
 
   @override
@@ -112,7 +120,7 @@ class _ConversationPageState extends State<ConversationPage> {
                         if (mid.isNotEmpty && mid != uid) { otherId = mid; break; }
                       }
                       if (otherId == null) return const Text('Direct');
-                      return _TitleWithAvatar(userId: otherId!);
+                      return _TitleWithAvatar(userId: otherId);
                     },
                   ),
           ),
@@ -185,12 +193,13 @@ class _ConversationPageState extends State<ConversationPage> {
                         final senderId = (m['sender_id'] as String?) ?? '';
                         final mine = uid != null && senderId == uid;
                         final content = (m['content'] as String?) ?? '';
+                        final postId = _postIdFromContent(content);
                         final createdAt = (m['created_at'] as String?) ?? '';
                         final bubble = ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 320),
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              color: mine ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceVariant,
+                              color: mine ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Padding(
@@ -208,12 +217,15 @@ class _ConversationPageState extends State<ConversationPage> {
                                         errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
                                       ),
                                     ),
-                                  if (content.isNotEmpty) Text(content),
+                                  if (postId != null)
+                                    _SharedPostCard(postId: postId)
+                                  else if (content.isNotEmpty)
+                                    Text(content),
                                   const SizedBox(height: 2),
                                   Builder(builder: (context) {
                                     final base = Theme.of(context).textTheme.bodySmall;
                                     final faded = base?.copyWith(
-                                      color: (base?.color ?? Colors.white).withOpacity(0.7),
+                                      color: (base.color ?? Colors.white).withOpacity(0.7),
                                     );
                                     return Text(_fmtLocal(createdAt), style: faded);
                                   }),
@@ -351,6 +363,82 @@ class _MiniAvatar extends StatelessWidget {
           radius: 12,
           backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
           child: photoUrl.isEmpty ? const Icon(Icons.person, size: 14) : null,
+        );
+      },
+    );
+  }
+}
+
+class _SharedPostCard extends StatelessWidget {
+  final String postId;
+  const _SharedPostCard({required this.postId});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: supabase
+          .from('posts')
+          .select('id, body, image_url, author_id, created_at')
+          .eq('id', postId)
+          .maybeSingle(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: SizedBox(
+              height: 90,
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          );
+        }
+        final post = snap.data;
+        if (post == null) {
+          return const Text('Shared post unavailable');
+        }
+        final imageUrl = (post['image_url'] as String?) ?? '';
+        final body = (post['body'] as String?) ?? '';
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            width: 220,
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => PostDetailPage(post: post)),
+                );
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (imageUrl.isNotEmpty)
+                    SizedBox(
+                      height: 120,
+                      width: double.infinity,
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => const Center(child: Icon(Icons.broken_image)),
+                      ),
+                    ),
+                  if (body.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                      child: Text(
+                        body,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  if (body.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(10, 8, 10, 10),
+                      child: Text('Shared a post'),
+                    ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );

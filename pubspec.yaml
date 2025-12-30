@@ -37,6 +37,8 @@ dependencies:
   # Firebase removed; Supabase only
   image_picker: ^1.2.0
   supabase_flutter: ^2.10.3
+  http: ^1.2.2
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +51,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
+  flutter_launcher_icons: ^0.14.1
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -90,3 +93,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "icon/artefakt_icon_zoom.jpg"
