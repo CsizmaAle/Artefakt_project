@@ -82,7 +82,8 @@ class _SearchPageState extends State<SearchPage> with SingleTickerProviderStateM
                 Expanded(
                   child: TabBarView(
                     children: [
-                      Column(
+                      ListView(
+                        padding: EdgeInsets.zero,
                         children: [
                           if (qLower.isEmpty) ...[
                             const RecentUsers(),
@@ -97,10 +98,17 @@ class _SearchPageState extends State<SearchPage> with SingleTickerProviderStateM
                               ),
                             ),
                           ],
-                          Expanded(child: _UsersResults(queryLower: qLower, rawQuery: q)),
+                          _UsersResults(
+                            queryLower: qLower,
+                            rawQuery: q,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                          ),
                         ],
                       ),
-                      Column(
+                      ListView(
+                        padding: EdgeInsets.zero,
                         children: [
                           if (qLower.isEmpty) ...[
                             const RecentPosts(),
@@ -115,7 +123,13 @@ class _SearchPageState extends State<SearchPage> with SingleTickerProviderStateM
                               ),
                             ),
                           ],
-                          Expanded(child: PostsResultsCards(queryLower: qLower, rawQuery: q)),
+                          PostsResultsCards(
+                            queryLower: qLower,
+                            rawQuery: q,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                          ),
                         ],
                       ),
                     ],
@@ -408,7 +422,16 @@ class _CulturalizeDialogState extends State<_CulturalizeDialog> {
 class _UsersResults extends StatelessWidget {
   final String queryLower;
   final String rawQuery;
-  const _UsersResults({required this.queryLower, required this.rawQuery});
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
+  final EdgeInsetsGeometry? padding;
+  const _UsersResults({
+    required this.queryLower,
+    required this.rawQuery,
+    this.shrinkWrap = false,
+    this.physics,
+    this.padding,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -441,7 +464,9 @@ class _UsersResults extends StatelessWidget {
           final picks = shuffled.take(6).toList();
           return ListView.separated(
             itemCount: picks.length,
-            padding: const EdgeInsets.all(12),
+            padding: padding ?? const EdgeInsets.all(12),
+            shrinkWrap: shrinkWrap,
+            physics: physics,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, i) {
               final u = picks[i];
@@ -471,7 +496,9 @@ class _UsersResults extends StatelessWidget {
         }
         return ListView.separated(
           itemCount: docs.length,
-          padding: const EdgeInsets.all(12),
+          padding: padding ?? const EdgeInsets.all(12),
+          shrinkWrap: shrinkWrap,
+          physics: physics,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, i) {
             final u = docs[i];

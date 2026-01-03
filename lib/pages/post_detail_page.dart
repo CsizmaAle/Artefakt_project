@@ -4,6 +4,7 @@ import 'package:artefakt_v1/services/post_service.dart';
 import 'package:artefakt_v1/widgets/post_actions.dart';
 import 'package:artefakt_v1/widgets/comment_tile.dart';
 import 'package:artefakt_v1/widgets/user_header.dart';
+import 'package:artefakt_v1/utils/date_format.dart';
 
 class PostDetailPage extends StatefulWidget {
   final Map<String, dynamic> post;
@@ -35,6 +36,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     final imageUrl = (post['image_url'] as String?) ?? '';
     final body = (post['body'] as String?) ?? '';
     final createdAt = (post['created_at'] as String?) ?? '';
+    final createdLabel = formatPostDate(createdAt);
     final userId = Supabase.instance.client.auth.currentUser?.id;
     final authorId = (post['author_id'] as String?) ?? '';
     final isAuthor = userId != null && authorId.isNotEmpty && userId == authorId;
@@ -72,7 +74,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
           if ((post['author_id'] as String?)?.isNotEmpty ?? false)
             UserHeader(
               userId: post['author_id'] as String,
-              subtitle: createdAt,
               padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
             ),
           if (imageUrl.isNotEmpty)
@@ -93,26 +94,47 @@ class _PostDetailPageState extends State<PostDetailPage> {
             ),
           if (imageUrl.isNotEmpty) const SizedBox(height: 12),
           if (body.isNotEmpty)
-            Text(
-              _editing ? (post['body'] as String? ?? '') : body,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
+            (imageUrl.isEmpty)
+                ? Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      _editing ? (post['body'] as String? ?? '') : body,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Colors.black,
+                          ),
+                    ),
+                  )
+                : Text(
+                    _editing ? (post['body'] as String? ?? '') : body,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.white,
+                        ),
+                  ),
           if (body.isNotEmpty) const SizedBox(height: 12),
-          if (createdAt.isNotEmpty)
+          if (createdLabel.isNotEmpty)
             Text(
-              createdAt,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+              createdLabel,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white),
             ),
           const SizedBox(height: 12),
 
           // Actions: Like / Comment / Share
           if (postId.isNotEmpty)
-            PostActionsBar(
-              postId: postId,
-              onCommentTap: () => _commentFocus.requestFocus(),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: PostActionsBar(
+                postId: postId,
+                onCommentTap: () => _commentFocus.requestFocus(),
+                whiteIcons: true,
+              ),
             ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Comments list
           if (postId.isNotEmpty)

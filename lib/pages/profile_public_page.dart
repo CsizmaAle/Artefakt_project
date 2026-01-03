@@ -7,6 +7,7 @@ import 'package:artefakt_v1/services/follow_events.dart';
 import 'package:artefakt_v1/services/search_history_service.dart';
 import 'package:artefakt_v1/services/messages_service.dart';
 import 'package:artefakt_v1/pages/conversation_page.dart';
+import 'package:artefakt_v1/pages/post_detail_page.dart';
 
 class ProfilePublicPage extends StatefulWidget {
   final String userId;
@@ -188,15 +189,22 @@ class _ProfilePublicPageState extends State<ProfilePublicPage> {
                       itemBuilder: (context, index) {
                         final post = docs[index];
                         final imageUrl = (post['image_url'] as String?) ?? '';
-                        return Container(
-                          color: Colors.grey.shade200,
-                          child: imageUrl.isNotEmpty
-                              ? Image.network(
-                                  imageUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (c, e, s) => const Center(child: Icon(Icons.broken_image)),
-                                )
-                              : const Center(child: Icon(Icons.image_not_supported_outlined)),
+                        return InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => PostDetailPage(post: post)),
+                            );
+                          },
+                          child: Container(
+                            color: Colors.grey.shade200,
+                            child: imageUrl.isNotEmpty
+                                ? Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (c, e, s) => const Center(child: Icon(Icons.broken_image)),
+                                  )
+                                : const Center(child: Icon(Icons.image_not_supported_outlined)),
+                          ),
                         );
                       },
                     );

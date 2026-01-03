@@ -295,7 +295,7 @@ class WikipediaService {
     for (final raw in items) {
       final item = raw as Map<String, dynamic>;
       if (item['type'] != 'image') continue;
-      final url = _pickMediaUrl(item);
+      final url = _normalizeImageUrl(_pickMediaUrl(item));
       if (url == null) continue;
       if (!_isLikelyPhoto(url)) continue;
       if (!urls.contains(url)) urls.add(url);
@@ -344,7 +344,7 @@ class WikipediaService {
       final page = value as Map<String, dynamic>;
       final imageInfo = page['imageinfo'] as List<dynamic>?;
       if (imageInfo == null || imageInfo.isEmpty) continue;
-      final url = _pickImageInfoUrl(imageInfo.first as Map<String, dynamic>);
+      final url = _normalizeImageUrl(_pickImageInfoUrl(imageInfo.first as Map<String, dynamic>));
       if (url == null) continue;
       if (!_isLikelyPhoto(url)) continue;
       if (!urls.contains(url)) urls.add(url);
@@ -404,7 +404,7 @@ class WikipediaService {
       final page = value as Map<String, dynamic>;
       final imageInfo = page['imageinfo'] as List<dynamic>?;
       if (imageInfo == null || imageInfo.isEmpty) continue;
-      final url = _pickImageInfoUrl(imageInfo.first as Map<String, dynamic>);
+      final url = _normalizeImageUrl(_pickImageInfoUrl(imageInfo.first as Map<String, dynamic>));
       if (url == null) continue;
       if (!_isLikelyPhoto(url)) continue;
       if (!urls.contains(url)) urls.add(url);
@@ -471,6 +471,13 @@ class WikipediaService {
 
   bool _isSvgUrl(String url) {
     return url.toLowerCase().endsWith('.svg');
+  }
+
+  String? _normalizeImageUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    if (url.startsWith('//')) return 'https:$url';
+    if (url.startsWith('http://')) return url.replaceFirst('http://', 'https://');
+    return url;
   }
 
   String _normalizeLanguage(String raw) {

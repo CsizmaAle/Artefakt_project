@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:artefakt_v1/theme_controller.dart';
+import 'package:artefakt_v1/pages/user_manual_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -63,6 +64,18 @@ class SettingsPage extends StatelessWidget {
             ),
             const Divider(height: 24),
           ],
+          ListTile(
+            leading: const Icon(Icons.menu_book_outlined),
+            title: const Text('User manual'),
+            subtitle: const Text('Read how to use Artefakt'),
+            onTap: () {
+              final email = user?.email ?? '';
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => UserManualPage(email: email)),
+              );
+            },
+          ),
+          const Divider(height: 24),
           FilledButton.icon(
             onPressed: () => _logout(context),
             icon: const Icon(Icons.logout),

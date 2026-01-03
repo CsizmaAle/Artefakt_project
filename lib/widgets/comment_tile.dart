@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:artefakt_v1/supabase_config.dart';
+import 'package:artefakt_v1/utils/date_format.dart';
 
 class CommentTile extends StatefulWidget {
   final String body;
@@ -50,6 +51,14 @@ class _CommentTileState extends State<CommentTile> {
             ? '@${username!}'
             : 'user';
 
+    final dateText = formatPostDate(widget.createdAt);
+    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Colors.white,
+          height: 1.45,
+        );
+    final dateStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Colors.white,
+        );
     return ListTile(
       dense: true,
       leading: CircleAvatar(
@@ -57,16 +66,21 @@ class _CommentTileState extends State<CommentTile> {
         backgroundImage: (photoUrl != null && photoUrl.isNotEmpty) ? NetworkImage(photoUrl) : null,
         child: (photoUrl == null || photoUrl.isEmpty) ? const Icon(Icons.person, size: 18) : null,
       ),
-      title: Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-      subtitle: Text(widget.body),
-      trailing: (widget.createdAt != null && widget.createdAt!.isNotEmpty)
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+      ),
+      subtitle: Text(widget.body, style: bodyStyle),
+      trailing: dateText.isNotEmpty
           ? Text(
-              widget.createdAt!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+              dateText,
+              style: dateStyle,
             )
           : null,
       contentPadding: EdgeInsets.zero,
     );
   }
 }
-

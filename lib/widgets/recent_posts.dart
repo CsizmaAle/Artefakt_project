@@ -71,38 +71,41 @@ class RecentPosts extends StatelessWidget {
                     ...ordered.map((p) {
                       final imageUrl = (p['image_url'] as String?) ?? '';
                       final body = (p['body'] as String?) ?? '';
-                      return Card(
-                        clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => PostDetailPage(post: p)),
-                            );
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if ((p['author_id'] as String?)?.isNotEmpty ?? false)
-                                UserHeader(
-                                  userId: p['author_id'] as String,
-                                  subtitle: (p['created_at'] as String?) ?? '',
-                                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                                ),
-                              if (imageUrl.isNotEmpty)
-                                AspectRatio(
-                                  aspectRatio: 1,
-                                  child: Image.network(
-                                    imageUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (c, e, s) => const Center(child: Icon(Icons.broken_image)),
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Card(
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => PostDetailPage(post: p)),
+                              );
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if ((p['author_id'] as String?)?.isNotEmpty ?? false)
+                                  UserHeader(
+                                    userId: p['author_id'] as String,
+                                    subtitle: (p['created_at'] as String?) ?? '',
+                                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                                   ),
-                                ),
-                              if (body.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                                  child: Text(body),
-                                ),
-                            ],
+                                if (imageUrl.isNotEmpty)
+                                  AspectRatio(
+                                    aspectRatio: 1,
+                                    child: Image.network(
+                                      imageUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (c, e, s) => const Center(child: Icon(Icons.broken_image)),
+                                    ),
+                                  ),
+                                if (body.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                                    child: Text(body),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       );

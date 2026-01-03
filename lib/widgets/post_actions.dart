@@ -6,7 +6,13 @@ import 'package:artefakt_v1/services/messages_service.dart';
 class PostActionsBar extends StatefulWidget {
   final String postId;
   final VoidCallback? onCommentTap;
-  const PostActionsBar({super.key, required this.postId, this.onCommentTap});
+  final bool whiteIcons;
+  const PostActionsBar({
+    super.key,
+    required this.postId,
+    this.onCommentTap,
+    this.whiteIcons = false,
+  });
 
   @override
   State<PostActionsBar> createState() => _PostActionsBarState();
@@ -154,6 +160,9 @@ class _PostActionsBarState extends State<PostActionsBar> {
   Widget build(BuildContext context) {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     final postId = widget.postId;
+    final scheme = Theme.of(context).colorScheme;
+    final baseColor = widget.whiteIcons ? Colors.white : scheme.onSurfaceVariant;
+    final labelColor = widget.whiteIcons ? Colors.white : scheme.onSurface;
     return Row(
       children: [
         StreamBuilder<List<Map<String, dynamic>>>(
@@ -162,6 +171,7 @@ class _PostActionsBarState extends State<PostActionsBar> {
             final likes = snap.data ?? const [];
             final count = likes.length;
             final likedByMe = userId != null && likes.any((e) => e['user_id'] == userId);
+            final likedColor = widget.whiteIcons ? Colors.white : (likedByMe ? Colors.red : baseColor);
             return TextButton.icon(
               onPressed: _likeBusy
                   ? null
@@ -182,9 +192,12 @@ class _PostActionsBarState extends State<PostActionsBar> {
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                   : Icon(
                       likedByMe ? Icons.favorite : Icons.favorite_border,
-                      color: likedByMe ? Colors.red : null,
+                      color: likedColor,
                     ),
-              label: Text(count.toString()),
+              label: Text(
+                count.toString(),
+                style: TextStyle(color: labelColor),
+              ),
             );
           },
         ),
@@ -195,8 +208,11 @@ class _PostActionsBarState extends State<PostActionsBar> {
             final count = (snap.data ?? const []).length;
             return TextButton.icon(
               onPressed: widget.onCommentTap,
-              icon: const Icon(Icons.mode_comment_outlined),
-              label: Text(count.toString()),
+              icon: Icon(Icons.mode_comment_outlined, color: baseColor),
+              label: Text(
+                count.toString(),
+                style: TextStyle(color: labelColor),
+              ),
             );
           },
         ),
@@ -209,8 +225,11 @@ class _PostActionsBarState extends State<PostActionsBar> {
               onPressed: _shareBusy ? null : () => _openSharePicker(postId),
               icon: _shareBusy
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.share_outlined),
-              label: Text(count.toString()),
+                  : Icon(Icons.share_outlined, color: baseColor),
+              label: Text(
+                count.toString(),
+                style: TextStyle(color: labelColor),
+              ),
             );
           },
         ),

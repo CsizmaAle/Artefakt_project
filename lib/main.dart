@@ -6,6 +6,8 @@ import 'pages/auth_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_config.dart';
 import 'theme_controller.dart';
+import 'app_theme.dart';
+import 'widgets/app_background.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,18 +25,11 @@ class MyApp extends StatelessWidget {
       builder: (context, mode, _) => MaterialApp(
         title: 'App',
         themeMode: mode,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: const Color(0xFF6750A4),
-          inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
-          brightness: Brightness.light,
-        ),
-        darkTheme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: const Color(0xFF6750A4),
-          inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
-          brightness: Brightness.dark,
-        ),
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        builder: (context, child) {
+          return AppBackground(child: child ?? const SizedBox.shrink());
+        },
         routes: {
           '/login': (_) => const AuthPage(),
         },

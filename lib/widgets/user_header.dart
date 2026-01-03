@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:artefakt_v1/supabase_config.dart';
 import 'package:artefakt_v1/pages/profile_public_page.dart';
 import 'package:artefakt_v1/services/search_history_service.dart';
+import 'package:artefakt_v1/utils/date_format.dart';
 
 class UserHeader extends StatefulWidget {
   final String userId;
@@ -55,6 +56,7 @@ class _UserHeaderState extends State<UserHeader> {
         : (username?.isNotEmpty ?? false)
             ? '@${username!}'
             : 'user';
+    final subtitleText = formatPostDate(widget.subtitle);
 
     return Padding(
       padding: widget.padding,
@@ -83,9 +85,9 @@ class _UserHeaderState extends State<UserHeader> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  if (widget.subtitle != null && widget.subtitle!.isNotEmpty)
+                  if (subtitleText.isNotEmpty)
                     Text(
-                      widget.subtitle!,
+                      subtitleText,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                     ),
                 ],

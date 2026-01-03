@@ -7,7 +7,17 @@ import 'package:artefakt_v1/services/search_history_service.dart';
 class PostsResultsCards extends StatelessWidget {
   final String queryLower;
   final String rawQuery;
-  const PostsResultsCards({super.key, required this.queryLower, required this.rawQuery});
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
+  final EdgeInsetsGeometry? padding;
+  const PostsResultsCards({
+    super.key,
+    required this.queryLower,
+    required this.rawQuery,
+    this.shrinkWrap = false,
+    this.physics,
+    this.padding,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +46,9 @@ class PostsResultsCards extends StatelessWidget {
           return const Center(child: Text('No posts found'));
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(12),
+          padding: padding ?? const EdgeInsets.all(12),
+          shrinkWrap: shrinkWrap,
+          physics: physics,
           itemCount: docs.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, i) {
