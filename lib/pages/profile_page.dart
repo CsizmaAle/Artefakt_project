@@ -7,14 +7,27 @@ import 'package:artefakt_v1/pages/follow_list_page.dart';
 import 'package:artefakt_v1/services/follow_events.dart';
 import 'package:artefakt_v1/pages/post_detail_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   final String? userId;
   const ProfilePage({super.key, this.userId});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  int _postsTick = 0;
+
+  void _refreshPostsIfNeeded(Object? result) {
+    if (result == true || result == 'updated') {
+      setState(() => _postsTick++);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final currentUser = Supabase.instance.client.auth.currentUser;
-    final targetUid = userId ?? currentUser?.id;
+    final targetUid = widget.userId ?? currentUser?.id;
 
     if (targetUid == null) {
       return Scaffold(
@@ -157,6 +170,7 @@ class ProfilePage extends StatelessWidget {
                 const Divider(height: 1),
                 const SizedBox(height: 8),
                 FutureBuilder<List<Map<String, dynamic>>>(
+                  key: ValueKey('profile-posts-$targetUid-$_postsTick'),
                   future: postsFuture,
                   builder: (context, postsSnap) {
                     if (postsSnap.connectionState == ConnectionState.waiting && !postsSnap.hasData) {
@@ -197,12 +211,13 @@ class ProfilePage extends StatelessWidget {
                         final post = docs[index];
                         final imageUrl = (post['image_url'] as String?) ?? '';
                         return InkWell(
-                          onTap: () {
-                            Navigator.of(context).push(
+                          onTap: () async {
+                            final res = await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => PostDetailPage(post: post),
                               ),
                             );
+                            _refreshPostsIfNeeded(res);
                           },
                           child: Container(
                             color: Colors.grey.shade200,

@@ -91,7 +91,6 @@ class _UserHeaderState extends State<UserHeader> {
                 ],
               ),
             ),
-            const Icon(Icons.more_horiz),
           ],
         ),
       ),

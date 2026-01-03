@@ -1,0 +1,20 @@
+{
+  "bias": 0.0,
+  "weights": {
+    "is_following": 1.2,
+    "is_unseen": 0.7,
+    "has_image": 0.15,
+    "body_len": 0.25,
+    "age_hours": -1.0,
+    "likes": 0.35,
+    "comments": 0.45,
+    "shares": 0.5
+  },
+  "norms": {
+    "age_hours_cap": 336,
+    "body_len_cap": 500,
+    "likes_cap": 30,
+    "comments_cap": 20,
+    "shares_cap": 10
+  }
+}

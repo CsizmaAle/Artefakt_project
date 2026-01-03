@@ -66,6 +66,26 @@ class PostService {
 
   }
 
+  Future<void> updatePost({
+    required String postId,
+    required String body,
+  }) async {
+    final user = _c.auth.currentUser;
+    if (user == null) throw Exception('Not logged in');
+    if (postId.trim().isEmpty) throw Exception('Missing post id');
+    await _c.from('posts').update({
+      'body': body.trim().isEmpty ? null : body.trim(),
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', postId);
+  }
+
+  Future<void> deletePost({required String postId}) async {
+    final user = _c.auth.currentUser;
+    if (user == null) throw Exception('Not logged in');
+    if (postId.trim().isEmpty) throw Exception('Missing post id');
+    await _c.from('posts').delete().eq('id', postId);
+  }
+
   // Likes
   Future<bool> toggleLike(String postId) async {
     final res = await _c.rpc('toggle_like', params: {'p_post_id': postId});

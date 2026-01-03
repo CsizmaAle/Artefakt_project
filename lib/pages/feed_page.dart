@@ -3,10 +3,29 @@ import 'package:artefakt_v1/supabase_config.dart';
 import 'package:artefakt_v1/widgets/post_actions.dart';
 import 'package:artefakt_v1/widgets/user_header.dart';
 import 'package:artefakt_v1/pages/post_detail_page.dart';
+import 'package:artefakt_v1/services/feed_ranker.dart';
+import 'package:artefakt_v1/services/post_interactions_service.dart';
+import 'package:artefakt_v1/services/post_metrics_service.dart';
 import 'package:artefakt_v1/services/search_history_service.dart';
 
-class FeedPage extends StatelessWidget {
+class FeedPage extends StatefulWidget {
   const FeedPage({super.key});
+
+  @override
+  State<FeedPage> createState() => _FeedPageState();
+}
+
+class _FeedPageState extends State<FeedPage> {
+  final PostMetricsService _metricsService = PostMetricsService();
+  final PostInteractionsService _interactionsService = PostInteractionsService();
+
+  @override
+  void initState() {
+    super.initState();
+    FeedRanker.instance.loadFromAssets().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +40,15 @@ class FeedPage extends StatelessWidget {
     if (uid == null) {
       return StreamBuilder<List<Map<String, dynamic>>>(
         stream: postsStream,
-        builder: (context, snap) => _buildPostsList(context, snap.data ?? const []),
+        builder: (context, snap) {
+          final posts = snap.data ?? const [];
+          return _buildRankedList(
+            posts: posts,
+            followingIds: const <String>{},
+            seenIds: const <String>{},
+            uid: null,
+          );
+        },
       );
     }
 
@@ -55,50 +82,12 @@ class FeedPage extends StatelessWidget {
               stream: postsStream,
               builder: (context, postsSnap) {
                 final all = postsSnap.data ?? const [];
-
-                DateTime? parseTs(String? s) => s == null ? null : DateTime.tryParse(s);
-                final cutoffFollowed = DateTime.now().subtract(const Duration(days: 21));
-
-                final idInFollowedRecent = <String>{};
-                final followedRecent = <Map<String, dynamic>>[];
-                for (final p in all) {
-                  final author = (p['author_id'] as String?) ?? '';
-                  if (!followingIds.contains(author)) continue;
-                  final ts = parseTs(p['created_at'] as String?);
-                  if (ts != null && ts.isBefore(cutoffFollowed)) continue;
-                  followedRecent.add(p);
-                  final pid = (p['id'] as String?) ?? '';
-                  if (pid.isNotEmpty) idInFollowedRecent.add(pid);
-                }
-
-                followedRecent.sort((a, b) {
-                  final aTs = parseTs(a['created_at'] as String?);
-                  final bTs = parseTs(b['created_at'] as String?);
-                  if (aTs != null && bTs != null) return bTs.compareTo(aTs);
-                  return ((b['created_at'] as String?) ?? '').compareTo((a['created_at'] as String?) ?? '');
-                });
-
-                final remaining = all.where((p) {
-                  final pid = (p['id'] as String?) ?? '';
-                  return pid.isEmpty || !idInFollowedRecent.contains(pid);
-                }).toList();
-
-                final unseen = <Map<String, dynamic>>[];
-                final seen = <Map<String, dynamic>>[];
-                for (final p in remaining) {
-                  final pid = (p['id'] as String?) ?? '';
-                  (pid.isNotEmpty && seenIds.contains(pid) ? seen : unseen).add(p);
-                }
-
-                unseen.shuffle();
-                seen.shuffle();
-
-                final ordered = <Map<String, dynamic>>[...followedRecent]
-                  
-                  ..addAll(unseen)
-                  ..addAll(seen);
-
-                return _buildPostsList(context, ordered);
+                return _buildRankedList(
+                  posts: all,
+                  followingIds: followingIds,
+                  seenIds: seenIds,
+                  uid: uid,
+                );
               },
             );
           },
@@ -106,6 +95,98 @@ class FeedPage extends StatelessWidget {
       },
     );
   }
+
+  Widget _buildRankedList({
+    required List<Map<String, dynamic>> posts,
+    required Set<String> followingIds,
+    required Set<String> seenIds,
+    required String? uid,
+  }) {
+    final ids = _collectPostIds(posts);
+    return FutureBuilder<_FeedExtras>(
+      future: _loadExtras(ids, uid),
+      builder: (context, extrasSnap) {
+        final extras = extrasSnap.data;
+        final metrics = extras?.metrics ?? PostMetrics.empty();
+        final interacted = extras?.interactedIds ?? const <String>{};
+        final enriched = _applyMetrics(posts, metrics);
+        final ranked = FeedRanker.instance.rankPosts(
+          posts: enriched,
+          followingIds: followingIds,
+          seenIds: seenIds,
+          currentUserId: uid,
+        );
+        final ordered = _moveInteractedToEnd(
+          ranked,
+          seenIds: seenIds,
+          interactedIds: interacted,
+        );
+        return _buildPostsList(context, ordered);
+      },
+    );
+  }
+
+  Future<_FeedExtras> _loadExtras(List<String> postIds, String? uid) async {
+    final metrics = await _metricsService.fetchMetrics(postIds);
+    if (uid == null || postIds.isEmpty) {
+      return _FeedExtras(metrics: metrics, interactedIds: const {});
+    }
+    final interacted = await _interactionsService.fetchInteractedPostIds(
+      postIds: postIds,
+      userId: uid,
+    );
+    return _FeedExtras(metrics: metrics, interactedIds: interacted);
+  }
+}
+
+List<String> _collectPostIds(List<Map<String, dynamic>> posts) {
+  final ids = <String>[];
+  for (final p in posts) {
+    final id = (p['id'] as String?) ?? '';
+    if (id.isNotEmpty) ids.add(id);
+  }
+  return ids;
+}
+
+List<Map<String, dynamic>> _moveInteractedToEnd(
+  List<Map<String, dynamic>> posts, {
+  required Set<String> seenIds,
+  required Set<String> interactedIds,
+}) {
+  if (posts.isEmpty) return posts;
+  final allInteracted = <String>{...seenIds, ...interactedIds};
+  if (allInteracted.isEmpty) return posts;
+  final fresh = <Map<String, dynamic>>[];
+  final old = <Map<String, dynamic>>[];
+  for (final post in posts) {
+    final id = (post['id'] as String?) ?? '';
+    if (id.isNotEmpty && allInteracted.contains(id)) {
+      old.add(post);
+    } else {
+      fresh.add(post);
+    }
+  }
+  return [...fresh, ...old];
+}
+
+List<Map<String, dynamic>> _applyMetrics(List<Map<String, dynamic>> posts, PostMetrics metrics) {
+  return [
+    for (final p in posts)
+      Map<String, dynamic>.from(p)
+        ..['likes_count'] = metrics.likes[(p['id'] as String?) ?? ''] ?? 0
+        ..['comments_count'] = metrics.comments[(p['id'] as String?) ?? ''] ?? 0
+        ..['shares_count'] = metrics.shares[(p['id'] as String?) ?? ''] ?? 0
+  ];
+}
+
+class _FeedExtras {
+  final PostMetrics metrics;
+  final Set<String> interactedIds;
+
+  const _FeedExtras({
+    required this.metrics,
+    required this.interactedIds,
+  });
 }
 
 Widget _buildPostsList(BuildContext context, List<Map<String, dynamic>> posts) {

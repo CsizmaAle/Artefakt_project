@@ -18,6 +18,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
   final _commentCtrl = TextEditingController();
   final _commentFocus = FocusNode();
   bool _sending = false;
+  bool _editing = false;
+  bool _hasEdits = false;
 
   @override
   void dispose() {
@@ -34,14 +36,39 @@ class _PostDetailPageState extends State<PostDetailPage> {
     final body = (post['body'] as String?) ?? '';
     final createdAt = (post['created_at'] as String?) ?? '';
     final userId = Supabase.instance.client.auth.currentUser?.id;
+    final authorId = (post['author_id'] as String?) ?? '';
+    final isAuthor = userId != null && authorId.isNotEmpty && userId == authorId;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Post'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+    return WillPopScope(
+      onWillPop: () async {
+        if (!_hasEdits) return true;
+        Navigator.of(context).pop(true);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Post'),
+          actions: isAuthor
+              ? [
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _showEditDialog(initialText: body);
+                      } else if (value == 'delete') {
+                        _confirmDelete(postId);
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    ],
+                  ),
+                ]
+              : null,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
           if ((post['author_id'] as String?)?.isNotEmpty ?? false)
             UserHeader(
               userId: post['author_id'] as String,
@@ -67,7 +94,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
           if (imageUrl.isNotEmpty) const SizedBox(height: 12),
           if (body.isNotEmpty)
             Text(
-              body,
+              _editing ? (post['body'] as String? ?? '') : body,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           if (body.isNotEmpty) const SizedBox(height: 12),
@@ -150,8 +177,84 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditDialog({required String initialText}) async {
+    if (_editing) return;
+    final controller = TextEditingController(text: initialText);
+    final updated = await showDialog<String?>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit post'),
+          content: TextField(
+            controller: controller,
+            maxLines: null,
+            decoration: const InputDecoration(
+              hintText: 'Update your post',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted || updated == null) return;
+    setState(() => _editing = true);
+    try {
+      final postId = (widget.post['id'] as String?) ?? '';
+      await _svc.updatePost(postId: postId, body: updated);
+      widget.post['body'] = updated.trim();
+      _hasEdits = true;
+      if (mounted) setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
+    } finally {
+      if (mounted) setState(() => _editing = false);
+    }
+  }
+
+  Future<void> _confirmDelete(String postId) async {
+    if (postId.isEmpty) return;
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete post?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
+    if (shouldDelete != true) return;
+    try {
+      await _svc.deletePost(postId: postId);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+    }
   }
 }
