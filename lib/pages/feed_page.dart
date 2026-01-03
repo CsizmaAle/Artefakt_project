@@ -72,10 +72,10 @@ class _FeedPageState extends State<FeedPage> {
         return StreamBuilder<List<Map<String, dynamic>>>(
           stream: seenStream,
           builder: (context, seenSnap) {
-            final seenRows = (seenSnap.data ?? const [])
-                .where((r) => (r['user_id'] as String?) == uid && (r['search_type'] as String?) == 'post');
             final seenIds = {
-              for (final r in seenRows) (r['query'] as String?) ?? ''
+              for (final r in (seenSnap.data ?? const []))
+                if ((r['user_id'] as String?) == uid && (r['search_type'] as String?) == 'post')
+                  (r['query'] as String?) ?? ''
             }..removeWhere((e) => e.isEmpty);
 
             return StreamBuilder<List<Map<String, dynamic>>>(

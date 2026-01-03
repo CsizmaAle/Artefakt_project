@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:artefakt_v1/supabase_config.dart';
 import 'package:artefakt_v1/pages/post_detail_page.dart';

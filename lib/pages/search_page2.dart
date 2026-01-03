@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:artefakt_v1/supabase_config.dart';
@@ -32,7 +34,7 @@ class _SearchPageState extends State<SearchPage> with SingleTickerProviderStateM
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
       if (mounted) setState(() {});
-    });
+    }); 
   }
 
   void _openCulturalizeDialog() {
@@ -528,50 +530,3 @@ class _UsersResults extends StatelessWidget {
   }
 }
 
-class _PostsResults extends StatelessWidget {
-  final String queryLower;
-  const _PostsResults({required this.queryLower});
-
-  @override
-  Widget build(BuildContext context) {
-    final future = queryLower.isEmpty
-        ? supabase
-            .from('posts')
-            .select('id, body, image_url, author_id, created_at')
-            .order('created_at', ascending: false)
-            .limit(30)
-        : supabase
-            .from('posts')
-            .select('id, body, image_url, author_id, created_at')
-            .ilike('body', '%$queryLower%')
-            .order('created_at', ascending: false)
-            .limit(30);
-
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: future,
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final docs = snap.data ?? const [];
-        if (docs.isEmpty) {
-          return const Center(child: Text('No posts found'));
-        }
-        return ListView.separated(
-          itemCount: docs.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, i) {
-            final p = docs[i];
-            final text = (p['body'] as String?) ?? '';
-            final image = (p['image_url'] as String?) ?? '';
-            final preview = text.isNotEmpty ? text : (image.isNotEmpty ? '[image]' : '(empty)');
-            return ListTile(
-              leading: image.isNotEmpty ? const Icon(Icons.image) : const Icon(Icons.notes),
-              title: Text(preview.length > 60 ? '${preview.substring(0, 60)}…' : preview),
-            );
-          },
-        );
-      },
-    );
-  }
-}

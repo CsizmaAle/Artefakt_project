@@ -10,7 +10,6 @@ class RecentUsers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final svc = SearchHistoryService();
     final uid = supabase.auth.currentUser?.id;
     if (uid == null) return const SizedBox.shrink();
 

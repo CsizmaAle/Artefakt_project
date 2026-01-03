@@ -15,6 +15,7 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
+  final _usernameCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
 
@@ -28,6 +29,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _loadProfile();
   }
 
+  @override
+  void dispose() {
+    _usernameCtrl.dispose();
+    _nameCtrl.dispose();
+    _bioCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadProfile() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
@@ -35,6 +44,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (!mounted) return;
     setState(() {
       _photoUrl = (row?['photo_url'] ?? '') as String?;
+      _usernameCtrl.text = (row?['username'] ?? '') as String? ?? '';
       _nameCtrl.text = (row?['display_name'] ?? '') as String? ?? '';
       _bioCtrl.text = (row?['bio'] ?? '') as String? ?? '';
     });
@@ -97,13 +107,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  String? _validateUsername(String input) {
+    final value = input.trim().toLowerCase();
+    if (value.isEmpty) return 'Username required';
+    if (!RegExp(r'^[a-z0-9_.]{3,20}$').hasMatch(value)) {
+      return '3-20: letters, digits, . or _';
+    }
+    return null;
+  }
+
   Future<void> _save() async {
     final c = Supabase.instance.client;
     final user = c.auth.currentUser;
     if (user == null) return;
     setState(() => _saving = true);
     try {
+      var usernameInput = _usernameCtrl.text.trim().toLowerCase();
+      if (usernameInput.isEmpty) {
+        usernameInput = _nameCtrl.text.trim().toLowerCase().replaceAll(' ', '');
+      }
+      final usernameError = _validateUsername(usernameInput);
+      if (usernameError != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(usernameError)));
+        }
+        return;
+      }
       await c.from('profiles').update({
+        'username': usernameInput,
         'display_name': _nameCtrl.text.trim(),
         'bio': _bioCtrl.text.trim(),
         'updated_at': DateTime.now().toIso8601String(),
@@ -116,7 +147,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Save failed: $e')));
+      final msg = e.toString().contains('23505') ? 'Username already taken.' : 'Save failed: $e';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -164,9 +196,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                 ],
               ),
-            ],
-          ),
+          ],
+        ),
           const SizedBox(height: 24),
+          TextField(
+            controller: _usernameCtrl,
+            decoration: const InputDecoration(labelText: 'Username'),
+          ),
+          const SizedBox(height: 12),
           TextField(
             controller: _nameCtrl,
             decoration: const InputDecoration(labelText: 'Display name'),

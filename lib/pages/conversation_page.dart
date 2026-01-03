@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:artefakt_v1/supabase_config.dart';
@@ -84,24 +86,25 @@ class _ConversationPageState extends State<ConversationPage> {
 
     final convStream = supabase
         .from('conversations')
-        .stream(primaryKey: ['id']);
+        .stream(primaryKey: ['id'])
+        .eq('id', widget.conversationId);
     final membersStream = supabase
         .from('conversation_members')
-        .stream(primaryKey: ['conversation_id', 'user_id']);
+        .stream(primaryKey: ['conversation_id', 'user_id'])
+        .eq('conversation_id', widget.conversationId);
 
     final msgsStream = supabase
         .from('messages')
         .stream(primaryKey: ['id'])
+        .eq('conversation_id', widget.conversationId)
         .order('created_at');
 
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: convStream,
       builder: (context, convSnap) {
-        final conv = (convSnap.data ?? const [])
-            .firstWhere(
-                (c) => (c['id'] as String?) == widget.conversationId,
-                orElse: () => <String, dynamic>{},
-            );
+        final conv = (convSnap.data ?? const []).isNotEmpty
+            ? convSnap.data!.first
+            : <String, dynamic>{};
         final title = ((conv['title'] as String?) ?? 'Conversation');
         final isGroup = (conv['is_group'] as bool?) ?? false;
         return Scaffold(

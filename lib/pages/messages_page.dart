@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:artefakt_v1/supabase_config.dart';
 import 'package:artefakt_v1/pages/conversation_page.dart';
@@ -7,13 +9,7 @@ class MessagesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = supabase.auth.currentUser?.id;
-
     return Scaffold(
-      //appBar: AppBar(
-      //  title: const Text('Messages'),
-     // ),
-      // New message creation removed per request
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: () async {
           final current = supabase.auth.currentUser?.id;
@@ -83,16 +79,19 @@ class _ConversationTile extends StatelessWidget {
 
     final membersStream = supabase
         .from('conversation_members')
-        .stream(primaryKey: ['conversation_id', 'user_id']);
+        .stream(primaryKey: ['conversation_id', 'user_id'])
+        .eq('conversation_id', cid);
 
     final lastMsgStream = supabase
         .from('messages')
         .stream(primaryKey: ['id'])
+        .eq('conversation_id', cid)
         .order('created_at', ascending: false);
 
     final readsStream = supabase
         .from('message_reads')
-        .stream(primaryKey: ['conversation_id', 'user_id']);
+        .stream(primaryKey: ['conversation_id', 'user_id'])
+        .eq('conversation_id', cid);
 
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: membersStream,

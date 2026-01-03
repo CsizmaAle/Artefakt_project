@@ -151,7 +151,12 @@ class _PostsResults extends StatelessWidget {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, i) {
             final p = docs[i];
-            final text = (p['content_text'] as String?) ?? '';\n            final image = (p['image_url'] as String?) ?? '';\n            final preview = text.isNotEmpty ? text : (image.isNotEmpty ? '[image]' : '(empty)');\n            return ListTile(\n              leading: image.isNotEmpty ? const Icon(Icons.image) : const Icon(Icons.notes),\n              title: Text(preview.length > 60 ? preview.substring(0, 60) + '…' : preview),\n            );
+            final text = (p['content_text'] as String?) ?? '';
+            final image = (p['image_url'] as String?) ?? '';
+            final preview = text.isNotEmpty ? text : (image.isNotEmpty ? '[image]' : '(empty)');
+            return ListTile(
+              leading: image.isNotEmpty ? const Icon(Icons.image) : const Icon(Icons.notes),
+              title: Text(preview.length > 60 ? preview.substring(0, 60) + 'ï¿½' : preview));
           },
         );
       },

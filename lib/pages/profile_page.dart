@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿// ignore_for_file: deprecated_member_use, use_build_context_synchronously
+
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:artefakt_v1/supabase_config.dart';
 import 'package:artefakt_v1/services/follow_service.dart';
@@ -50,7 +52,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final viewingSelf = currentUser != null && currentUser.id == targetUid;
 
-    final userFuture = supabase.from('profiles').select().eq('id', targetUid).maybeSingle();
     final postsFuture = supabase.from('posts').select().eq('author_id', targetUid).order('created_at', ascending: false);
 
     return Scaffold(
@@ -210,6 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       itemBuilder: (context, index) {
                         final post = docs[index];
                         final imageUrl = (post['image_url'] as String?) ?? '';
+                        final body = (post['body'] as String?) ?? '';
                         return InkWell(
                           onTap: () async {
                             final res = await Navigator.of(context).push(
@@ -227,7 +229,21 @@ class _ProfilePageState extends State<ProfilePage> {
                                     fit: BoxFit.cover,
                                     errorBuilder: (c, e, s) => const Center(child: Icon(Icons.broken_image)),
                                   )
-                                : const Center(child: Icon(Icons.image_not_supported_outlined)),
+                                : Container(
+                                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
+                                    padding: const EdgeInsets.all(8),
+                                    child: Center(
+                                      child: Text(
+                                        body.isNotEmpty ? body : 'Text post',
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: Theme.of(context).colorScheme.onSurface,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
                           ),
                         );
                       },
