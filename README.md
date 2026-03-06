@@ -1,4 +1,7 @@
 # ☕ Artefakt Project ☕
+
+>**Last update:** January 2026  
+
 An Android social media platform built for artists and art lovers to interact and share art.
 
 ## ✨ Features
